@@ -1,6 +1,8 @@
 package otelginmetrics
 
 import (
+	"net/http"
+
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -15,14 +17,11 @@ func (fn optionFunc) apply(cfg *config) {
 	fn(cfg)
 }
 
-// WithAdditionalAttributes sets a list of attribute.KeyValue labels for all metrics associated with this round tripper
-func WithAdditionalAttributes(attributes map[string]string) Option {
+// WithAttributes sets a func using which what attributes to be recorded can be specified.
+// By default the DefaultAttributes is used
+func WithAttributes(attributes func(serverName, route string, request *http.Request) []attribute.KeyValue) Option {
 	return optionFunc(func(cfg *config) {
-		attr := make([]attribute.KeyValue, 0, len(attributes))
-		for k, v := range attributes {
-			attr = append(attr, attribute.String(k, v))
-		}
-		cfg.attributes = attr
+		cfg.attributes = attributes
 	})
 }
 
