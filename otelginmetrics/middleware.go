@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 )
 
@@ -32,7 +31,7 @@ func Middleware(service string, options ...Option) gin.HandlerFunc {
 
 		start := time.Now()
 
-		reqAttributes := append(cfg.attributes, getRequestAttributes(service, route, ginCtx.Request)...)
+		reqAttributes := cfg.attributes(service, route, ginCtx.Request)
 
 		if cfg.recordInFlight {
 			recorder.AddInflightRequests(ctx, 1, reqAttributes)
@@ -65,27 +64,6 @@ func Middleware(service string, options ...Option) gin.HandlerFunc {
 
 		ginCtx.Next()
 	}
-}
-
-func getRequestAttributes(serverName, route string, request *http.Request) []attribute.KeyValue {
-	attrs := []attribute.KeyValue{
-		semconv.HTTPMethodKey.String(request.Method),
-		semconv.HTTPTargetKey.String(request.RequestURI),
-	}
-
-	if serverName != "" {
-		attrs = append(attrs, semconv.HTTPServerNameKey.String(serverName))
-	}
-	if route != "" {
-		attrs = append(attrs, semconv.HTTPRouteKey.String(route))
-	}
-	if ua := request.UserAgent(); ua != "" {
-		attrs = append(attrs, semconv.HTTPUserAgentKey.String(ua))
-	}
-	if request.Host != "" {
-		attrs = append(attrs, semconv.HTTPHostKey.String(request.Host))
-	}
-	return attrs
 }
 
 func computeApproximateRequestSize(r *http.Request) int64 {

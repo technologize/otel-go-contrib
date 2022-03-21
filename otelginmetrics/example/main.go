@@ -110,7 +110,10 @@ func main() {
 	initMetrics()
 	router.Use(otelginmetrics.Middleware(
 		"TEST-SERVICE",
-		otelginmetrics.WithAdditionalAttributes(map[string]string{"label": "value"}),
+		// Custom attributes
+		otelginmetrics.WithAttributes(func(serverName, route string, request *http.Request) []attribute.KeyValue {
+			return append(otelginmetrics.DefaultAttributes(serverName, route, request), attribute.String("Custom-attribute", "value"))
+		}),
 	))
 
 	logic := func(ctx *gin.Context, sleep int) {
