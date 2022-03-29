@@ -28,9 +28,12 @@ func Middleware(service string, options ...Option) gin.HandlerFunc {
 		if len(route) <= 0 {
 			route = "nonconfigured"
 		}
+		if !cfg.shouldRecord(service, route, ginCtx.Request) {
+			ginCtx.Next()
+			return
+		}
 
 		start := time.Now()
-
 		reqAttributes := cfg.attributes(service, route, ginCtx.Request)
 
 		if cfg.recordInFlight {

@@ -57,8 +57,18 @@ func WithGroupedStatusDisabled() Option {
 	})
 }
 
+// WithRecorder sets a recorder for recording requests
+// By default the open telemetry recorder is used
 func WithRecorder(recorder Recorder) Option {
 	return optionFunc(func(cfg *config) {
 		cfg.recorder = recorder
+	})
+}
+
+// WithShouldRecordFunc sets a func using which whether a record should be recorded
+// By default the all api calls are recorded
+func WithShouldRecordFunc(shouldRecord func(serverName, route string, request *http.Request) bool) Option {
+	return optionFunc(func(cfg *config) {
+		cfg.shouldRecord = shouldRecord
 	})
 }
