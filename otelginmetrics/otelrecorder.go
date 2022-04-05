@@ -7,6 +7,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 	"go.opentelemetry.io/otel/metric/unit"
 )
 
@@ -16,11 +18,11 @@ const instrumentationName = "github.com/technologize/otel-go-contrib/otelginmetr
 // has the required methods to be used with the HTTP
 // middlewares.
 type otelRecorder struct {
-	attemptsCounter       metric.Int64UpDownCounter
-	totalDuration         metric.Int64Histogram
-	activeRequestsCounter metric.Int64UpDownCounter
-	requestSize           metric.Int64Histogram
-	responseSize          metric.Int64Histogram
+	attemptsCounter       syncint64.UpDownCounter
+	totalDuration         syncint64.Histogram
+	activeRequestsCounter syncint64.UpDownCounter
+	requestSize           syncint64.Histogram
+	responseSize          syncint64.Histogram
 }
 
 func GetRecorder(metricsPrefix string) Recorder {
@@ -30,13 +32,18 @@ func GetRecorder(metricsPrefix string) Recorder {
 		}
 		return metricName
 	}
-	meter := global.Meter(instrumentationName, metric.WithInstrumentationVersion(SemVersion()))
+	meter := global.MeterProvider().Meter(instrumentationName, metric.WithInstrumentationVersion(SemVersion()))
+	attemptsCounter, _ := meter.SyncInt64().UpDownCounter(metricName("http.server.request_count"), instrument.WithDescription("Number of Requests"), instrument.WithUnit(unit.Dimensionless))
+	totalDuration, _ := meter.SyncInt64().Histogram(metricName("http.server.duration"), instrument.WithDescription("Time Taken by request"), instrument.WithUnit(unit.Milliseconds))
+	activeRequestsCounter, _ := meter.SyncInt64().UpDownCounter(metricName("http.server.active_requests"), instrument.WithDescription("Number of requests inflight"), instrument.WithUnit(unit.Dimensionless))
+	requestSize, _ := meter.SyncInt64().Histogram(metricName("http.server.request_content_length"), instrument.WithDescription("Request Size"), instrument.WithUnit(unit.Bytes))
+	responseSize, _ := meter.SyncInt64().Histogram(metricName("http.server.response_content_length"), instrument.WithDescription("Response Size"), instrument.WithUnit(unit.Bytes))
 	return &otelRecorder{
-		attemptsCounter:       metric.Must(meter).NewInt64UpDownCounter(metricName("http.server.request_count"), metric.WithDescription("Number of Requests"), metric.WithUnit(unit.Dimensionless)),
-		totalDuration:         metric.Must(meter).NewInt64Histogram(metricName("http.server.duration"), metric.WithDescription("Time Taken by request"), metric.WithUnit(unit.Milliseconds)),
-		activeRequestsCounter: metric.Must(meter).NewInt64UpDownCounter(metricName("http.server.active_requests"), metric.WithDescription("Number of requests inflight"), metric.WithUnit(unit.Dimensionless)),
-		requestSize:           metric.Must(meter).NewInt64Histogram(metricName("http.server.request_content_length"), metric.WithDescription("Request Size"), metric.WithUnit(unit.Bytes)),
-		responseSize:          metric.Must(meter).NewInt64Histogram(metricName("http.server.response_content_length"), metric.WithDescription("Response Size"), metric.WithUnit(unit.Bytes)),
+		attemptsCounter:       attemptsCounter,
+		totalDuration:         totalDuration,
+		activeRequestsCounter: activeRequestsCounter,
+		requestSize:           requestSize,
+		responseSize:          responseSize,
 	}
 }
 
