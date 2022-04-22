@@ -2,7 +2,7 @@
 
 ## Usage
 
-### Gin Opentelemetry Metrics
+### Gin HTTP Metrics using Opentelemetry
 
 ```golang
 import "github.com/technologize/otel-go-contrib/otelginmetrics"
