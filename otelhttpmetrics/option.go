@@ -1,4 +1,4 @@
-package otelginmetrics
+package otelhttpmetrics
 
 import (
 	"net/http"
@@ -19,7 +19,7 @@ func (fn optionFunc) apply(cfg *config) {
 
 // WithAttributes sets a func using which what attributes to be recorded can be specified.
 // By default the DefaultAttributes is used
-func WithAttributes(attributes func(serverName, route string, request *http.Request) []attribute.KeyValue) Option {
+func WithAttributes(attributes func(*http.Request) []attribute.KeyValue) Option {
 	return optionFunc(func(cfg *config) {
 		cfg.attributes = attributes
 	})
@@ -67,7 +67,7 @@ func WithRecorder(recorder Recorder) Option {
 
 // WithShouldRecordFunc sets a func using which whether a record should be recorded
 // By default the all api calls are recorded
-func WithShouldRecordFunc(shouldRecord func(serverName, route string, request *http.Request) bool) Option {
+func WithShouldRecordFunc(shouldRecord func(*http.Request) bool) Option {
 	return optionFunc(func(cfg *config) {
 		cfg.shouldRecord = shouldRecord
 	})
