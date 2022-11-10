@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -13,10 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	metricGlobal "go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/sdk/export/metric/aggregation"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
+	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 )
@@ -28,10 +24,12 @@ func RandomValue(values []string) string {
 
 func initMetrics() {
 
-	metricExporter, err := stdoutmetric.New(stdoutmetric.WithPrettyPrint())
+	metricExporter, err := stdoutmetric.New()
 	if err != nil {
 		panic(err)
 	}
+	reader := metric.NewPeriodicReader(metricExporter, metric.WithInterval(1*time.Second))
+
 	fmt.Println(metricExporter)
 	res, err := resource.New(context.Background(),
 		resource.WithAttributes(semconv.ServiceNameKey.String("PG2")),
@@ -41,19 +39,7 @@ func initMetrics() {
 	if err != nil {
 		panic(err)
 	}
-	metricProvider := controller.New(
-		processor.NewFactory(
-			selector.NewWithInexpensiveDistribution(),
-			aggregation.CumulativeTemporalitySelector(),
-			processor.WithMemory(true),
-		),
-		controller.WithCollectPeriod(1*time.Second),
-		controller.WithResource(res),
-		controller.WithExporter(metricExporter),
-	)
-	if err := metricProvider.Start(context.Background()); err != nil {
-		log.Fatalln("failed to start the metric controller:", err)
-	}
+	metricProvider := metric.NewMeterProvider(metric.WithReader(reader), metric.WithResource(res))
 	metricGlobal.SetMeterProvider(metricProvider)
 }
 
