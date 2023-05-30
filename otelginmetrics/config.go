@@ -20,9 +20,10 @@ type config struct {
 func defaultConfig() *config {
 	return &config{
 		recordInFlight: true,
-		recordDuration: true,
 		recordSize:     true,
+		recordDuration: true,
 		groupedStatus:  true,
+		recorder:       nil,
 		attributes:     DefaultAttributes,
 		shouldRecord: func(_, _ string, _ *http.Request) bool {
 			return true
@@ -38,6 +39,7 @@ var DefaultAttributes = func(serverName, route string, request *http.Request) []
 	if serverName != "" {
 		attrs = append(attrs, semconv.HTTPServerNameKey.String(serverName))
 	}
+
 	if route != "" {
 		attrs = append(attrs, semconv.HTTPRouteKey.String(route))
 	}
