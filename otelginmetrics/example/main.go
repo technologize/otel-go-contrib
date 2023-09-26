@@ -9,9 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/technologize/otel-go-contrib/otelginmetrics"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
-	metricGlobal "go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
@@ -40,7 +40,7 @@ func initMetrics() {
 		panic(err)
 	}
 	metricProvider := metric.NewMeterProvider(metric.WithReader(reader), metric.WithResource(res))
-	metricGlobal.SetMeterProvider(metricProvider)
+	otel.SetMeterProvider(metricProvider)
 }
 
 func main() {
