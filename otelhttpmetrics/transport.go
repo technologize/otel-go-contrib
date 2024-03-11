@@ -38,7 +38,7 @@ func (t *transport) RoundTrip(r *http.Request) (*http.Response, error) {
 	cfg := t.cfg
 	recorder := cfg.recorder
 	if !cfg.shouldRecord(r) {
-		return t.RoundTrip(r)
+		return t.rt.RoundTrip(r)
 	}
 	reqAttributes := cfg.attributes(r)
 
